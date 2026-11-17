@@ -7,7 +7,7 @@ import { TaskList } from "./components/TaskList.jsx";
 import { rescheduleOverdueTasks } from "./task-scheduler.js";
 import { loadTasks, saveTasks } from "./task-storage.js";
 
-export function App() {
+export function App({ user, onSignOut }) {
   const [initialState] = useState(loadTasks);
   const [tasks, setTasks] = useState(initialState.tasks);
   const [statusMessage, setStatusMessage] = useState(
@@ -90,7 +90,14 @@ export function App() {
         <a className="brand" href="#" aria-label="Magical Girl Planner home">
           <MonospacedTitle>Magical Girl Planner</MonospacedTitle>
         </a>
-        <span className="topbar-date">{formatToday()}</span>
+        <div className="topbar-user">
+          <span className="topbar-date">{formatToday()}</span>
+          {onSignOut && (
+            <button type="button" className="signout-button" onClick={onSignOut} aria-label={`Sign out ${user?.displayName ?? ""}`.trim()}>
+              Sign out
+            </button>
+          )}
+        </div>
       </header>
 
       <main>

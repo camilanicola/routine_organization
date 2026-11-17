@@ -591,6 +591,56 @@ input[type="file"]::file-selector-button {
   transform: translateY(-1px);
 }
 
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.signout-button {
+  padding: 7px 12px;
+  border: 1px solid #efd9e7;
+  border-radius: 18px;
+  background: white;
+  color: var(--pink-dark);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.login-screen {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.login-card {
+  display: grid;
+  width: min(420px, 100%);
+  justify-items: center;
+  gap: 22px;
+  padding: 32px 28px;
+  text-align: center;
+}
+
+.login-card h1 {
+  font-size: clamp(1.4rem, 6vw, 1.9rem);
+}
+
+.login-card .welcome-ascii {
+  margin: 0;
+}
+
+.google-button {
+  width: 100%;
+}
+
+.login-card .form-error {
+  min-height: 1em;
+  margin: 0;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
