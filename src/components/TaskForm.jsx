@@ -2,13 +2,6 @@ import { useState } from "react";
 import { REPEAT_DAYS } from "../calendar.js";
 import { createTask } from "../task-scheduler.js";
 
-function getDefaultDateTime() {
-  const date = new Date();
-  date.setMinutes(0, 0, 0);
-  date.setHours(date.getHours() + 1);
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
-}
-
 export function readPng(file) {
   if (file.type !== "image/png") {
     return Promise.reject(new TypeError("Choose a PNG file."));
@@ -39,6 +32,8 @@ export function TaskForm({ onCreate }) {
       const task = createTask({
         title: formData.get("title"),
         dueAt: hasNoDate ? null : formData.get("dueAt"),
+        endAt: hasNoDate ? null : formData.get("endAt"),
+        durationMinutes: hasNoDate ? Number(formData.get("durationMinutes")) : undefined,
         priority: formData.get("priority"),
         repeatDays: formData.getAll("repeat").map(Number),
         notes: formData.get("notes"),
@@ -49,7 +44,6 @@ export function TaskForm({ onCreate }) {
       if (await onCreate(task)) {
         form.reset();
         setHasNoDate(false);
-        form.elements.dueAt.value = getDefaultDateTime();
         setErrorMessage("");
       }
     } catch (error) {
@@ -67,13 +61,22 @@ export function TaskForm({ onCreate }) {
         </div>
 
         <div>
-          <label htmlFor="task-due">Date &amp; time</label>
-          <input id="task-due" name="dueAt" type="datetime-local" defaultValue={getDefaultDateTime()} disabled={hasNoDate} required={!hasNoDate} />
+          <label htmlFor="task-due">Start date &amp; time</label>
+          <input id="task-due" name="dueAt" type="datetime-local" disabled={hasNoDate} required={!hasNoDate} />
+          <label htmlFor="task-end">End date &amp; time</label>
+          <input id="task-end" name="endAt" type="datetime-local" disabled={hasNoDate} required={!hasNoDate} />
           <label className="check-label" htmlFor="task-no-date">
             <input id="task-no-date" type="checkbox" checked={hasNoDate} onChange={(event) => setHasNoDate(event.target.checked)} />
             No date, keep it until done
           </label>
         </div>
+
+        {hasNoDate && (
+          <div>
+            <label htmlFor="task-duration">Duration in minutes</label>
+            <input id="task-duration" name="durationMinutes" type="number" min="1" step="1" required />
+          </div>
+        )}
 
         <div>
           <label htmlFor="task-priority">Priority</label>

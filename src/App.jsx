@@ -5,6 +5,7 @@ import { MonospacedTitle } from "./components/MonospacedTitle.jsx";
 import { TaskForm } from "./components/TaskForm.jsx";
 import { TaskList } from "./components/TaskList.jsx";
 import { rescheduleOverdueTasks } from "./task-scheduler.js";
+import { hasExplicitTiming, removeTasksWithoutExplicitTiming } from "./task-repository.js";
 import { clearLocalTasks, loadTasks as loadLocalTasks } from "./task-storage.js";
 
 export function App({ user, onSignOut, repository }) {
@@ -20,28 +21,37 @@ export function App({ user, onSignOut, repository }) {
     async function loadAgenda() {
       try {
         let loadedTasks = await repository.load();
-        let message = "";
+        const messages = [];
 
         if (loadedTasks.length === 0) {
-          const { tasks: localTasks } = loadLocalTasks();
+          const { tasks: localTasks, error } = loadLocalTasks();
+          if (error) throw error;
           if (localTasks.length > 0) {
-            await repository.saveMany(localTasks);
+            const importableTasks = localTasks.filter(hasExplicitTiming);
+            if (importableTasks.length > 0) await repository.saveMany(importableTasks);
             clearLocalTasks();
-            loadedTasks = localTasks;
-            message = `${localTasks.length} task(s) imported from this browser.`;
+            loadedTasks = importableTasks;
+            if (importableTasks.length > 0) messages.push(`${importableTasks.length} task(s) imported from this browser.`);
+            if (importableTasks.length < localTasks.length) {
+              messages.push(`${localTasks.length - importableTasks.length} old task(s) without explicit timing removed.`);
+            }
           }
         }
+
+        const cleaned = await removeTasksWithoutExplicitTiming(repository, loadedTasks);
+        loadedTasks = cleaned.tasks;
+        if (cleaned.removedCount > 0) messages.push(`${cleaned.removedCount} old task(s) without explicit timing removed.`);
 
         const adjustedTasks = rescheduleOverdueTasks(loadedTasks, new Date());
         const movedTasks = adjustedTasks.filter((task, index) => task.dueAt !== loadedTasks[index]?.dueAt);
         if (movedTasks.length > 0) {
           await repository.saveMany(movedTasks);
-          message = `${movedTasks.length} overdue task(s) rescheduled.`;
+          messages.push(`${movedTasks.length} overdue task(s) rescheduled.`);
         }
 
         if (isCancelled) return;
         setTasks(adjustedTasks);
-        setStatusMessage(message);
+        setStatusMessage(messages.join(" "));
       } catch (error) {
         if (!isCancelled) setStatusMessage(`Could not load your tasks: ${error.message}`);
       } finally {

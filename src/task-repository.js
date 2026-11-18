@@ -1,5 +1,19 @@
 import { collection, doc, getDocs, setDoc, writeBatch } from "firebase/firestore";
 
+export function hasExplicitTiming(task) {
+  if (!Object.hasOwn(task, "endAt")) return false;
+  if (task.dueAt === null) {
+    return task.endAt === null && Number.isInteger(task.durationMinutes) && task.durationMinutes > 0;
+  }
+  return Boolean(task.endAt);
+}
+
+export async function removeTasksWithoutExplicitTiming(repository, tasks) {
+  const removed = tasks.filter((task) => !hasExplicitTiming(task));
+  if (removed.length > 0) await repository.deleteMany(removed);
+  return { tasks: tasks.filter(hasExplicitTiming), removedCount: removed.length };
+}
+
 export function createFirestoreRepository(db, userId) {
   const tasksCollection = collection(db, "users", userId, "tasks");
 
@@ -17,6 +31,14 @@ export function createFirestoreRepository(db, userId) {
       const batch = writeBatch(db);
       tasks.forEach((task) => batch.set(doc(tasksCollection, task.id), task));
       await batch.commit();
+    },
+
+    async deleteMany(tasks) {
+      for (let index = 0; index < tasks.length; index += 500) {
+        const batch = writeBatch(db);
+        tasks.slice(index, index + 500).forEach((task) => batch.delete(doc(tasksCollection, task.id)));
+        await batch.commit();
+      }
     }
   };
 }
@@ -35,6 +57,10 @@ export function createMemoryRepository(initialTasks = []) {
 
     async saveMany(tasks) {
       tasks.forEach((task) => stored.set(task.id, structuredClone(task)));
+    },
+
+    async deleteMany(tasks) {
+      tasks.forEach((task) => stored.delete(task.id));
     }
   };
 }

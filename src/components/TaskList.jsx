@@ -14,10 +14,23 @@ function formatTime(value) {
 }
 
 function formatWhen(task) {
-  if (!task.dueAt) return "No date · until done";
+  if (!task.dueAt) return `No date · ${task.durationMinutes} min · until done`;
+  const start = new Date(task.dueAt);
+  const end = new Date(task.endAt);
+  const endLabel = new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(end);
   if (task.repeatDays?.length) {
     const days = REPEAT_DAYS.filter(({ value }) => task.repeatDays.includes(value)).map(({ value }) => dayLabels[value]);
-    return `${days.join(", ")} · ${formatTime(task.dueAt)}`;
+    const startDay = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
+    const endDay = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
+    const daysLater = (endDay - startDay) / 86_400_000;
+    const daySuffix = daysLater ? ` (+${daysLater} ${daysLater === 1 ? "day" : "days"})` : "";
+    return `${days.join(", ")} · ${formatTime(task.dueAt)} – ${formatTime(end)}${daySuffix}`;
   }
 
   return new Intl.DateTimeFormat("en-US", {
@@ -26,7 +39,7 @@ function formatWhen(task) {
     month: "short",
     hour: "2-digit",
     minute: "2-digit"
-  }).format(new Date(task.dueAt));
+  }).format(start) + ` – ${endLabel}`;
 }
 
 export function TaskList({ tasks, dateKey, onToggle }) {

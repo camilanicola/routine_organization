@@ -21,9 +21,5 @@ export function loadTasks(storage = globalThis.localStorage) {
 }
 
 export function clearLocalTasks(storage = globalThis.localStorage) {
-  try {
-    storage.removeItem(TASK_STORAGE_KEY);
-  } catch {
-    // Leftover local data is harmless because it is only imported into an empty account.
-  }
+  storage.removeItem(TASK_STORAGE_KEY);
 }

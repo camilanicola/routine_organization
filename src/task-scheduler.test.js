@@ -6,6 +6,7 @@ test("cria uma tarefa removendo espaços extras e organizando os dias de repeti�
   const task = createTask({
     title: "  Estudar  ",
     dueAt: "2026-11-18T10:00:00.000Z",
+    endAt: "2026-11-18T10:45:00.000Z",
     priority: "important",
     notes: "  Revisar capítulo  ",
     iconText: "  ☆  ",
@@ -20,35 +21,30 @@ test("cria uma tarefa removendo espaços extras e organizando os dias de repeti�
   assert.equal(task.status, "pending");
 });
 
-test("encontra o próximo espaço de tempo disponível quando não há conflitos", () => {
+test("encontra o próximo horário livre depois de uma tarefa de uma hora", () => {
   const tasks = [
     createTask({
       title: "Reunião",
-      dueAt: "2026-11-18T09:00:00.000Z",
-      priority: "urgent",
-      repeatDays: []
-    })
-  ];
-
-  const nextSlot = findNextAvailableSlot(tasks, "2026-11-18T10:00:00.000Z", 30);
-
-  const slotTime = new Date(nextSlot).getTime();
-  const afterTime = new Date("2026-11-18T10:00:00.000Z").getTime();
-  
-  assert(slotTime > afterTime, "o slot deve ser após a hora solicitada");
-  assert(Number.isFinite(slotTime), "o slot deve ser uma data válida");
-});
-
-test("encontra o próximo horário livre quando há uma tarefa agendada", () => {
-  const tasks = [
-    createTask({
-      title: "Reunião",
-      dueAt: "2026-11-18T10:30:00.000Z",
+      dueAt: "2026-11-18T09:30:00.000Z",
+      endAt: "2026-11-18T10:30:00.000Z",
       priority: "urgent"
     })
   ];
 
-  const nextSlot = findNextAvailableSlot(tasks, "2026-11-18T10:00:00.000Z");
+  const nextSlot = findNextAvailableSlot(tasks, "2026-11-18T09:00:00.000Z", 30);
 
-  assert.equal(nextSlot, "2026-11-18T11:00:00.000Z");
+  assert.equal(nextSlot, "2026-11-18T10:30:00.000Z");
+});
+
+test("cria uma tarefa sem data com a duração informada", () => {
+  const task = createTask({
+    title: "Ler",
+    dueAt: null,
+    durationMinutes: 45,
+    priority: "important"
+  });
+
+  assert.equal(task.dueAt, null);
+  assert.equal(task.endAt, null);
+  assert.equal(task.durationMinutes, 45);
 });
