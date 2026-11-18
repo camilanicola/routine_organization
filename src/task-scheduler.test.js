@@ -38,3 +38,17 @@ test("encontra o próximo espaço de tempo disponível quando não há conflitos
   assert(slotTime > afterTime, "o slot deve ser após a hora solicitada");
   assert(Number.isFinite(slotTime), "o slot deve ser uma data válida");
 });
+
+test("encontra o próximo horário livre quando há uma tarefa agendada", () => {
+  const tasks = [
+    createTask({
+      title: "Reunião",
+      dueAt: "2026-11-18T10:30:00.000Z",
+      priority: "urgent"
+    })
+  ];
+
+  const nextSlot = findNextAvailableSlot(tasks, "2026-11-18T10:00:00.000Z");
+
+  assert.equal(nextSlot, "2026-11-18T11:00:00.000Z");
+});
