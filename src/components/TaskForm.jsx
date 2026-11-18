@@ -46,7 +46,7 @@ export function TaskForm({ onCreate }) {
         iconData: image && image.size > 0 ? await readPng(image) : ""
       });
 
-      if (onCreate(task)) {
+      if (await onCreate(task)) {
         form.reset();
         setHasNoDate(false);
         form.elements.dueAt.value = getDefaultDateTime();

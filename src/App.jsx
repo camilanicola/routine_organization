@@ -1,82 +1,100 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { getAgendaTasks, getDateKey, shiftDate } from "./calendar.js";
 import { CalendarView } from "./components/CalendarView.jsx";
 import { MonospacedTitle } from "./components/MonospacedTitle.jsx";
 import { TaskForm } from "./components/TaskForm.jsx";
 import { TaskList } from "./components/TaskList.jsx";
 import { rescheduleOverdueTasks } from "./task-scheduler.js";
-import { loadTasks, saveTasks } from "./task-storage.js";
+import { clearLocalTasks, loadTasks as loadLocalTasks } from "./task-storage.js";
 
-export function App({ user, onSignOut }) {
-  const [initialState] = useState(loadTasks);
-  const [tasks, setTasks] = useState(initialState.tasks);
-  const [statusMessage, setStatusMessage] = useState(
-    initialState.error ? `Could not load saved tasks: ${initialState.error.message}` : ""
-  );
+export function App({ user, onSignOut, repository }) {
+  const [tasks, setTasks] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [statusMessage, setStatusMessage] = useState("");
   const [activeView, setActiveView] = useState("agenda");
   const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const hasRescheduled = useRef(false);
 
   useEffect(() => {
-    if (hasRescheduled.current) return;
-    hasRescheduled.current = true;
+    let isCancelled = false;
 
-    try {
-      const adjustedTasks = rescheduleOverdueTasks(tasks, new Date());
-      const movedCount = adjustedTasks.filter((task, index) => task.dueAt !== tasks[index]?.dueAt).length;
-      if (movedCount === 0) return;
+    async function loadAgenda() {
+      try {
+        let loadedTasks = await repository.load();
+        let message = "";
 
-      const error = saveTasks(adjustedTasks);
-      if (error) {
-        setStatusMessage(`Could not save rescheduled tasks: ${error.message}`);
-        return;
+        if (loadedTasks.length === 0) {
+          const { tasks: localTasks } = loadLocalTasks();
+          if (localTasks.length > 0) {
+            await repository.saveMany(localTasks);
+            clearLocalTasks();
+            loadedTasks = localTasks;
+            message = `${localTasks.length} task(s) imported from this browser.`;
+          }
+        }
+
+        const adjustedTasks = rescheduleOverdueTasks(loadedTasks, new Date());
+        const movedTasks = adjustedTasks.filter((task, index) => task.dueAt !== loadedTasks[index]?.dueAt);
+        if (movedTasks.length > 0) {
+          await repository.saveMany(movedTasks);
+          message = `${movedTasks.length} overdue task(s) rescheduled.`;
+        }
+
+        if (isCancelled) return;
+        setTasks(adjustedTasks);
+        setStatusMessage(message);
+      } catch (error) {
+        if (!isCancelled) setStatusMessage(`Could not load your tasks: ${error.message}`);
+      } finally {
+        if (!isCancelled) setIsLoading(false);
       }
-
-      setTasks(adjustedTasks);
-      setStatusMessage(`${movedCount} overdue task(s) rescheduled.`);
-    } catch (error) {
-      setStatusMessage(`Could not reschedule tasks: ${error.message}`);
     }
-  }, []);
 
-  function handleCreateTask(task) {
-    const updatedTasks = [...tasks, task];
-    const error = saveTasks(updatedTasks);
-    if (error) {
-      setStatusMessage(`Could not save tasks in this browser: ${error.message}`);
+    loadAgenda();
+    return () => {
+      isCancelled = true;
+    };
+  }, [repository]);
+
+  async function handleCreateTask(task) {
+    try {
+      await repository.save(task);
+    } catch (error) {
+      setStatusMessage(`Could not save your task: ${error.message}`);
       return false;
     }
 
-    setTasks(updatedTasks);
+    setTasks((current) => [...current, task]);
     setSelectedDate(task.dueAt ? new Date(task.dueAt) : new Date());
     setStatusMessage("Task added.");
     return true;
   }
 
-  function handleToggleTask(taskId, dateKey) {
-    let isNowDone = false;
-    const updatedTasks = tasks.map((task) => {
-      if (task.id !== taskId) return task;
+  async function handleToggleTask(taskId, dateKey) {
+    const task = tasks.find((item) => item.id === taskId);
+    if (!task) return;
 
-      if (task.repeatDays?.length) {
-        const completed = task.completedDates ?? [];
-        isNowDone = !completed.includes(dateKey);
-        return {
-          ...task,
-          completedDates: isNowDone ? [...completed, dateKey] : completed.filter((key) => key !== dateKey)
-        };
-      }
-
+    let updatedTask;
+    let isNowDone;
+    if (task.repeatDays?.length) {
+      const completed = task.completedDates ?? [];
+      isNowDone = !completed.includes(dateKey);
+      updatedTask = {
+        ...task,
+        completedDates: isNowDone ? [...completed, dateKey] : completed.filter((key) => key !== dateKey)
+      };
+    } else {
       isNowDone = task.status !== "done";
-      return { ...task, status: isNowDone ? "done" : "pending" };
-    });
-    const error = saveTasks(updatedTasks);
-    if (error) {
-      setStatusMessage(`Could not save tasks in this browser: ${error.message}`);
+      updatedTask = { ...task, status: isNowDone ? "done" : "pending" };
+    }
+
+    try {
+      await repository.save(updatedTask);
+    } catch (error) {
+      setStatusMessage(`Could not save your task: ${error.message}`);
       return;
     }
 
-    setTasks(updatedTasks);
+    setTasks((current) => current.map((item) => item.id === taskId ? updatedTask : item));
     setStatusMessage(isNowDone ? "Task completed." : "Task restored.");
   }
 
@@ -131,7 +149,7 @@ export function App({ user, onSignOut }) {
           </button>
         </nav>
 
-        <p className="notice" role="status" aria-live="polite">{statusMessage}</p>
+        <p className="notice" role="status" aria-live="polite">{isLoading ? "Loading your tasks..." : statusMessage}</p>
 
         {activeView === "agenda" ? (
           <section className="workspace" id="agenda-panel" role="tabpanel" aria-labelledby="agenda-tab">

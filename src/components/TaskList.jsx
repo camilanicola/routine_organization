@@ -31,7 +31,7 @@ function formatWhen(task) {
 
 export function TaskList({ tasks, dateKey, onToggle }) {
   if (tasks.length === 0) {
-    return <pre className="empty-state" role="img" aria-label="No tasks yet"> /\_/\{"\n"}( -.- ){"\n"} &gt; ^ &lt;</pre>;
+    return <pre className="empty-state" role="img" aria-label="No tasks yet"> ≽^-⩊-^≼ Zzzz</pre>;
   }
 
   return (

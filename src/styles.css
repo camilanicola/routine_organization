@@ -632,8 +632,21 @@ input[type="file"]::file-selector-button {
   margin: 0;
 }
 
-.google-button {
+.login-form {
+  display: grid;
   width: 100%;
+  gap: 14px;
+  text-align: left;
+}
+
+.link-button {
+  border: 0;
+  background: none;
+  color: var(--pink-dark);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: underline;
 }
 
 .login-card .form-error {
