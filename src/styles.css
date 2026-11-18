@@ -345,6 +345,7 @@ img.task-icon {
   border-left: 2px solid #e8adca;
   background:
     repeating-linear-gradient(#fffdf7, #fffdf7 23px, #f1e4dc 24px);
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
 
