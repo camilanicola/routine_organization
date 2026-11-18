@@ -12,6 +12,8 @@ O Magical Girl Planner é uma aplicação de planner para organizar tarefas, com
 - **React 19:** biblioteca para construir a interface em componentes.
 - **Vite:** ferramenta de desenvolvimento e de build da aplicação.
 - **JavaScript, HTML e CSS:** lógica de agenda, estrutura da página e estilo rosa.
+- **Firebase Authentication:** login com e-mail e senha.
+- **Cloud Firestore:** banco de dados na nuvem que guarda as tarefas de cada usuária, protegido por regras de segurança.
 - **GitHub Actions:** executa o build em Linux, macOS e Windows.
 
 ## Uso de IA: 
