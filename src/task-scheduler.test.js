@@ -49,6 +49,15 @@ test("cria uma tarefa sem data com a duração informada", () => {
   assert.equal(task.durationMinutes, 45);
 });
 
+test("não cria uma tarefa com título vazio", () => {
+  assert.throws(() => createTask({
+    title: "   ",
+    dueAt: null,
+    durationMinutes: 45,
+    priority: "important"
+  }), { message: "Enter a task title." });
+});
+
 test("reagenda uma tarefa atrasada mantendo sua duração", () => {
   const task = createTask({
     title: "Estudar",
