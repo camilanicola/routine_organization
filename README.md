@@ -15,20 +15,22 @@ O Magical Girl Planner é uma aplicação de planner para organizar tarefas, com
 - **Firebase Authentication:** login com e-mail e senha.
 - **Cloud Firestore:** banco de dados na nuvem que guarda as tarefas de cada usuária, protegido por regras de segurança.
 - **GitHub Actions:** executa o build em Linux, macOS e Windows.
+- **Cypress:** executa os testes E2E
 
 ## Uso de IA: 
 - Foi utilizado o copilot para ajudar a construir a estrutura inicial e o primeiro protótipo
 
 ## Execução dos testes: 
+
 ### Testes de unidade
+
+Para executar os testes de unidade localmente:
 
 ```sh
 npm test
 ```
 
 ### Testes E2E
-
-Inicie a aplicação em um terminal:
 
 ```sh
 npm run dev -- --host 127.0.0.1
@@ -42,11 +44,13 @@ npm run e2e:run
 
 Para abrir o Cypress em modo interativo, use `npm run e2e:open`.
 
-## Como rodar a Aplicação
+## Como rodar
+
 Instale o Node.js 24 e execute na pasta do projeto:
 
 ```sh
 npm ci
 npm run dev
 ```
+
 Acesse o endereço informado no terminal, geralmente `http://localhost:5173`.
