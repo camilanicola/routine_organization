@@ -20,13 +20,29 @@ O Magical Girl Planner é uma aplicação de planner para organizar tarefas, com
 - Foi utilizado o copilot para ajudar a construir a estrutura inicial e o primeiro protótipo
 
 ## Execução dos testes: 
-Para executar os testes de unidade localmente:
+### Testes de unidade
 
 ```sh
 npm test
 ```
 
-## Como rodar
+### Testes E2E
+
+Inicie a aplicação em um terminal:
+
+```sh
+npm run dev -- --host 127.0.0.1
+```
+
+Em outro terminal, execute o Cypress:
+
+```sh
+npm run e2e:run
+```
+
+Para abrir o Cypress em modo interativo, use `npm run e2e:open`.
+
+## Como rodar a Aplicação
 Instale o Node.js 24 e execute na pasta do projeto:
 
 ```sh
