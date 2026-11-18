@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getAuthErrorMessage } from "../auth.jsx";
+import { getAuthErrorMessage } from "../auth-errors.js";
 import { MonospacedTitle } from "./MonospacedTitle.jsx";
 
 export function LoginScreen({ onSignIn, onSignUp, configError, isLoading }) {
