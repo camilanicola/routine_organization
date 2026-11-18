@@ -20,8 +20,11 @@ O Magical Girl Planner é uma aplicação de planner para organizar tarefas, com
 - Foi utilizado o copilot para ajudar a construir a estrutura inicial e o primeiro protótipo
 
 ## Execução dos testes: 
-instruções para executar os testes localmente.
-- Ainda vamos implementar
+Para executar os testes de unidade localmente:
+
+```sh
+npm test
+```
 
 ## Como rodar
 Instale o Node.js 24 e execute na pasta do projeto:
