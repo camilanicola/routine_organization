@@ -14,6 +14,7 @@ export function App({ user, onSignOut, repository }) {
   const [statusMessage, setStatusMessage] = useState("");
   const [activeView, setActiveView] = useState("agenda");
   const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [editingTaskId, setEditingTaskId] = useState(null);
 
   useEffect(() => {
     let isCancelled = false;
@@ -70,12 +71,49 @@ export function App({ user, onSignOut, repository }) {
       await repository.save(task);
     } catch (error) {
       setStatusMessage(`Could not save your task: ${error.message}`);
-      return false;
+      throw error;
     }
 
     setTasks((current) => [...current, task]);
     setSelectedDate(task.dueAt ? new Date(task.dueAt) : new Date());
     setStatusMessage("Task added.");
+    return true;
+  }
+
+  function handleEditTask(taskId, date) {
+    if (date) setSelectedDate(date);
+    setEditingTaskId(taskId);
+    setActiveView("agenda");
+  }
+
+  async function handleSaveEdit(changes) {
+    const original = tasks.find((task) => task.id === editingTaskId);
+    if (!original) {
+      setStatusMessage("Could not edit this task: task not found.");
+      throw new Error("Task not found.");
+    }
+
+    const updatedTask = {
+      ...original,
+      ...changes,
+      id: original.id,
+      status: original.status,
+      completedDates: original.completedDates ?? []
+    };
+
+    try {
+      await repository.save(updatedTask);
+    } catch (error) {
+      setStatusMessage(`Could not save your task: ${error.message}`);
+      throw error;
+    }
+
+    setTasks((current) => current.map((task) => task.id === original.id ? updatedTask : task));
+    if (updatedTask.dueAt !== original.dueAt) {
+      setSelectedDate(updatedTask.dueAt ? new Date(updatedTask.dueAt) : new Date());
+    }
+    setEditingTaskId(null);
+    setStatusMessage("Task updated.");
     return true;
   }
 
@@ -111,6 +149,7 @@ export function App({ user, onSignOut, repository }) {
   const today = new Date();
   const isToday = getDateKey(selectedDate) === getDateKey(today);
   const dayTasks = getAgendaTasks(tasks, selectedDate, today);
+  const editingTask = tasks.find((task) => task.id === editingTaskId);
 
   return (
     <div className="page-shell">
@@ -175,16 +214,21 @@ export function App({ user, onSignOut, repository }) {
                   <span className="task-count">{dayTasks.length} {dayTasks.length === 1 ? "task" : "tasks"}</span>
                 </div>
               </div>
-              <TaskList tasks={dayTasks} dateKey={getDateKey(selectedDate)} onToggle={handleToggleTask} />
+              <TaskList tasks={dayTasks} dateKey={getDateKey(selectedDate)} onToggle={handleToggleTask} onEdit={handleEditTask} />
             </section>
 
             <aside className="side-column">
-              <TaskForm onCreate={handleCreateTask} />
+              <TaskForm
+                key={editingTask?.id ?? "new"}
+                task={editingTask}
+                onSave={editingTask ? handleSaveEdit : handleCreateTask}
+                onCancel={() => setEditingTaskId(null)}
+              />
             </aside>
           </section>
         ) : (
           <section id="calendar-panel" role="tabpanel" aria-labelledby="calendar-tab">
-            <CalendarView tasks={tasks} />
+            <CalendarView tasks={tasks} onEdit={handleEditTask} />
           </section>
         )}
       </main>

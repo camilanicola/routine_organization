@@ -9,7 +9,7 @@ const fullDateFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric"
 });
 
-export function CalendarView({ tasks }) {
+export function CalendarView({ tasks, onEdit }) {
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const days = getCalendarDays(month.getFullYear(), month.getMonth());
@@ -60,7 +60,12 @@ export function CalendarView({ tasks }) {
         <h3 id="selected-day-title">{fullDateFormatter.format(selectedDate)}</h3>
         {selectedTasks.length === 0
           ? <p className="calendar-empty">No tasks planned.</p>
-          : <ul>{selectedTasks.map((task) => <li key={task.id}>{task.title}</li>)}</ul>}
+          : <ul>{selectedTasks.map((task) => (
+            <li key={task.id}>
+              {task.title}{" "}
+              <button className="complete-button" type="button" onClick={() => onEdit(task.id, selectedDate)} aria-label={`Edit ${task.title}`}>Edit</button>
+            </li>
+          ))}</ul>}
       </section>
     </section>
   );

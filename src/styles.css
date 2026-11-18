@@ -267,7 +267,7 @@ h1 {
 
 .task-card {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 12px;
   align-items: start;
   padding: 16px 15px;
@@ -301,16 +301,24 @@ h1 {
 
 .task-icon {
   display: grid;
-  width: 42px;
-  height: 42px;
+  width: max-content;
+  min-width: 42px;
+  max-width: min(140px, 25vw);
+  min-height: 42px;
   place-items: center;
   border-radius: 11px;
   background: #fff3f8;
   color: var(--pink-dark);
   font-size: 0.76rem;
-  object-fit: contain;
-  overflow: hidden;
+  overflow-wrap: anywhere;
   padding: 4px;
+  white-space: pre-wrap;
+}
+
+img.task-icon {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
 }
 
 .task-content {
@@ -347,6 +355,12 @@ h1 {
   background: #fff2f8;
   color: #a34a7b;
   font-size: 0.65rem;
+}
+
+.task-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .complete-button {
@@ -565,6 +579,12 @@ input[type="file"]::file-selector-button {
   margin: -14px 0 -7px;
   color: var(--muted);
   font-size: 0.66rem;
+}
+
+.duration-hint {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
 }
 
 .form-error {

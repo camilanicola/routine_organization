@@ -30,7 +30,7 @@ function formatWhen(task) {
     const endDay = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
     const daysLater = (endDay - startDay) / 86_400_000;
     const daySuffix = daysLater ? ` (+${daysLater} ${daysLater === 1 ? "day" : "days"})` : "";
-    return `${days.join(", ")} · ${formatTime(task.dueAt)} – ${formatTime(end)}${daySuffix}`;
+    return `${days.join(", ")} · ${formatTime(task.dueAt)} – ${formatTime(end)}${daySuffix} · ${task.durationMinutes} min`;
   }
 
   return new Intl.DateTimeFormat("en-US", {
@@ -39,10 +39,10 @@ function formatWhen(task) {
     month: "short",
     hour: "2-digit",
     minute: "2-digit"
-  }).format(start) + ` – ${endLabel}`;
+  }).format(start) + ` – ${endLabel} · ${task.durationMinutes} min`;
 }
 
-export function TaskList({ tasks, dateKey, onToggle }) {
+export function TaskList({ tasks, dateKey, onToggle, onEdit }) {
   if (tasks.length === 0) {
     return <pre className="empty-state" role="img" aria-label="No tasks yet"> ≽^-⩊-^≼ Zzzz</pre>;
   }
@@ -60,14 +60,24 @@ export function TaskList({ tasks, dateKey, onToggle }) {
             <span className="priority-badge">{priorityNames[task.priority]}</span>
             {task.notes && <p className="task-notes">{task.notes}</p>}
           </div>
-          <button
-            className="complete-button"
-            type="button"
-            onClick={() => onToggle(task.id, dateKey)}
-            aria-label={`${task.status === "done" ? "Undo" : "Complete"} ${task.title}`}
-          >
-            {task.status === "done" ? "Undo" : "Done"}
-          </button>
+          <div className="task-actions">
+            <button
+              className="complete-button"
+              type="button"
+              onClick={() => onEdit(task.id)}
+              aria-label={`Edit ${task.title}`}
+            >
+              Edit
+            </button>
+            <button
+              className="complete-button"
+              type="button"
+              onClick={() => onToggle(task.id, dateKey)}
+              aria-label={`${task.status === "done" ? "Undo" : "Complete"} ${task.title}`}
+            >
+              {task.status === "done" ? "Undo" : "Done"}
+            </button>
+          </div>
         </article>
       ))}
     </div>
