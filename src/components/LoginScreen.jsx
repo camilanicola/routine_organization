@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getAuthErrorMessage } from "../auth-errors.js";
+import { getAuthErrorMessage, getPasswordConfirmationError } from "../auth-errors.js";
 import { MonospacedTitle } from "./MonospacedTitle.jsx";
 
 export function LoginScreen({ onSignIn, onSignUp, configError, isLoading }) {
@@ -14,8 +14,9 @@ export function LoginScreen({ onSignIn, onSignUp, configError, isLoading }) {
     const email = String(formData.get("email")).trim();
     const password = String(formData.get("password"));
 
-    if (isSignUp && password !== formData.get("confirm")) {
-      setErrorMessage("Passwords do not match.");
+    const confirmationError = isSignUp ? getPasswordConfirmationError(password, formData.get("confirm")) : "";
+    if (confirmationError) {
+      setErrorMessage(confirmationError);
       return;
     }
 

@@ -9,3 +9,7 @@ const ERROR_MESSAGES = {
 export function getAuthErrorMessage(error) {
   return ERROR_MESSAGES[error?.code] ?? "Something went wrong. Please try again.";
 }
+
+export function getPasswordConfirmationError(password, confirmation) {
+  return password === confirmation ? "" : "Passwords do not match.";
+}
