@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createTask, findNextAvailableSlot } from "./task-scheduler.js";
+import { createTask, findNextAvailableSlot, rescheduleOverdueTasks } from "./task-scheduler.js";
 
 test("cria uma tarefa removendo espaços extras e organizando os dias de repetição", () => {
   const task = createTask({
@@ -47,4 +47,19 @@ test("cria uma tarefa sem data com a duração informada", () => {
   assert.equal(task.dueAt, null);
   assert.equal(task.endAt, null);
   assert.equal(task.durationMinutes, 45);
+});
+
+test("reagenda uma tarefa atrasada mantendo sua duração", () => {
+  const task = createTask({
+    title: "Estudar",
+    dueAt: "2026-11-18T09:00:00.000Z",
+    endAt: "2026-11-18T10:45:00.000Z",
+    priority: "important"
+  });
+
+  const [rescheduledTask] = rescheduleOverdueTasks([task], "2026-11-18T11:00:00.000Z");
+
+  assert.equal(rescheduledTask.dueAt, "2026-11-18T11:30:00.000Z");
+  assert.equal(rescheduledTask.endAt, "2026-11-18T13:15:00.000Z");
+  assert.equal(rescheduledTask.durationMinutes, 105);
 });
