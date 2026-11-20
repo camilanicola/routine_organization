@@ -28,3 +28,20 @@ test("gera uma grade de 42 dias começando na segunda-feira", () => {
   assert.deepEqual(dias[0], new Date(2026, 9, 26));
   assert.deepEqual(dias[41], new Date(2026, 11, 6));
 });
+
+test("marca tarefa repetitiva como concluída apenas nas datas em completedDates", () => {
+  const tarefa = {
+    title: "Treinar",
+    dueAt: new Date("2026-11-16T09:00:00").toISOString(),
+    repeatDays: [1, 3],
+    completedDates: ["2026-11-18"]
+  };
+
+  const segunda = getTasksOnDate([tarefa], new Date("2026-11-16T09:00:00"));
+  const terca = getTasksOnDate([tarefa], new Date("2026-11-17T09:00:00"));
+  const quarta = getTasksOnDate([tarefa], new Date("2026-11-18T09:00:00"));
+
+  assert.equal(segunda[0].status, "pending");
+  assert.deepEqual(terca, []);
+  assert.equal(quarta[0].status, "done");
+});
