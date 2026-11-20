@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getTasksOnDate, shiftDate, getCalendarDays, getAgendaTasks } from "./calendar.js";
+import { getTasksOnDate, shiftDate, getCalendarDays, getAgendaTasks, formatMonth } from "./calendar.js";
 
 test("avança para o próximo mês depois do último dia", () => {
   const dia = new Date("2026-01-31T00:00:00");
@@ -60,4 +60,10 @@ test("ordena tarefas do dia por horário e inclui tarefas sem data apenas hoje",
 
   assert.deepEqual(agendaHoje.map((t) => t.title), ["Sem data", "Manhã", "Tarde"]);
   assert.deepEqual(agendaAmanha, []);
+});
+
+test("formata o mês e o ano por extenso em inglês", () => {
+  const resultado = formatMonth(new Date(2026, 10, 1));
+
+  assert.equal(resultado, "November 2026");
 });
