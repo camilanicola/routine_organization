@@ -81,3 +81,26 @@ test("não cria uma tarefa quando o horário de término não é posterior ao in
     priority: "important"
   }), { name: "TypeError", message: "The end date and time must be after the start." });
 });
+
+test("reagenda tarefas atrasadas priorizando a maior prioridade primeiro", () => {
+  const baixa = createTask({
+    title: "Organizar mesa",
+    dueAt: "2026-11-18T08:00:00.000Z",
+    endAt: "2026-11-18T08:30:00.000Z",
+    priority: "neither"
+  });
+  const alta = createTask({
+    title: "Entregar trabalho",
+    dueAt: "2026-11-18T09:00:00.000Z",
+    endAt: "2026-11-18T09:30:00.000Z",
+    priority: "important-urgent"
+  });
+
+  const [baixaReagendada, altaReagendada] = rescheduleOverdueTasks(
+    [baixa, alta],
+    "2026-11-18T11:00:00.000Z"
+  );
+
+  assert.equal(altaReagendada.dueAt, "2026-11-18T11:30:00.000Z");
+  assert.equal(baixaReagendada.dueAt, "2026-11-18T12:00:00.000Z");
+});
