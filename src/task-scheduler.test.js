@@ -72,3 +72,12 @@ test("reagenda uma tarefa atrasada mantendo sua duração", () => {
   assert.equal(rescheduledTask.endAt, "2026-11-18T13:15:00.000Z");
   assert.equal(rescheduledTask.durationMinutes, 105);
 });
+
+test("não cria uma tarefa quando o horário de término não é posterior ao início", () => {
+  assert.throws(() => createTask({
+    title: "Estudar",
+    dueAt: "2026-11-18T11:00:00.000Z",
+    endAt: "2026-11-18T10:00:00.000Z",
+    priority: "important"
+  }), { name: "TypeError", message: "The end date and time must be after the start." });
+});
