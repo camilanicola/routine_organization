@@ -1,7 +1,7 @@
 # Magical Girl Planner
 
 ## Integrantes: 
-- Bruna Caroline
+- Bruna Caroline Cardoso da Silva
 - Camila Nicola
 - Isabela Fernandes Guerra de Morais
 
