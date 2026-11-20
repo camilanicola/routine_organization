@@ -18,3 +18,14 @@ test("carrega apenas tarefas válidas salvas no armazenamento local", () => {
   assert.equal(resultado.error, null);
   assert.deepEqual(resultado.tasks.map((t) => t.id), ["1", "2"]);
 });
+
+test("retorna lista vazia e erro quando os dados salvos não são uma lista", () => {
+  const storage = {
+    getItem: () => JSON.stringify({ invalido: true })
+  };
+
+  const resultado = loadTasks(storage);
+
+  assert.deepEqual(resultado.tasks, []);
+  assert.equal(resultado.error?.message, "Saved data is not a task list.");
+});
