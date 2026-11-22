@@ -1,6 +1,6 @@
 describe("Validação de senha no cadastro", () => {
   it("exibe erro quando a confirmação de senha é diferente da senha", () => {
-    cy.visit("/");
+    cy.visitPlanner();
     cy.contains("button", "Create an account").click();
 
     cy.get("#login-email").type("teste@example.com");

@@ -1,6 +1,6 @@
 describe("Cadastro", () => {
   it("mostra os campos de cadastro ao selecionar criar uma conta", () => {
-    cy.visit("/");
+    cy.visitPlanner();
     cy.contains("button", "Create an account").click();
 
     cy.get("#login-email").should("be.visible");

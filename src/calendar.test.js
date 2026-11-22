@@ -67,3 +67,24 @@ test("formata o mês e o ano por extenso em inglês", () => {
 
   assert.equal(resultado, "November 2026");
 });
+
+test("não mostra uma repetição antes da data inicial", () => {
+  const tarefa = { title: "Treinar", dueAt: new Date("2026-11-18T10:00:00").toISOString(), repeatDays: [1, 3] };
+
+  assert.deepEqual(getTasksOnDate([tarefa], new Date("2026-11-16T10:00:00")), []);
+});
+
+test("calcula a conclusão de cada ocorrência sem modificar a tarefa original", () => {
+  const tarefa = {
+    title: "Treinar",
+    dueAt: new Date("2026-11-18T10:00:00").toISOString(),
+    repeatDays: [3, 5],
+    completedDates: ["2026-11-18"],
+    status: "pending"
+  };
+  const original = structuredClone(tarefa);
+
+  assert.equal(getTasksOnDate([tarefa], new Date("2026-11-18T10:00:00"))[0].status, "done");
+  assert.equal(getTasksOnDate([tarefa], new Date("2026-11-20T10:00:00"))[0].status, "pending");
+  assert.deepEqual(tarefa, original);
+});

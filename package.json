@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:e2e": "vite --config vite.e2e.config.js --host 127.0.0.1 --port 5174 --strictPort",
     "test": "node --test",
     "e2e:open": "cypress open",
     "e2e:run": "cypress run",

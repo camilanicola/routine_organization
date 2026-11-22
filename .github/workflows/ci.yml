@@ -37,3 +37,23 @@ jobs:
 
       - name: Build application
         run: npm run build
+
+  e2e:
+    name: Cypress (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Run browser tests
+        uses: cypress-io/github-action@v7
+        with:
+          command: npm run e2e:run

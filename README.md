@@ -32,17 +32,25 @@ npm test
 
 ### Testes E2E
 
-```sh
-npm run dev -- --host 127.0.0.1
-```
+Os testes usam as telas reais com autenticação simulada e o repositório em memória. Não precisam de credenciais nem acessam o Firebase. Cada teste começa com dados isolados e uma data fixa.
 
-Em outro terminal, execute o Cypress:
+Execute o Cypress diretamente:
 
 ```sh
 npm run e2e:run
 ```
 
 Para abrir o Cypress em modo interativo, use `npm run e2e:open`.
+
+O Cypress inicia automaticamente o servidor de testes, aguarda sua inicialização e usa o endereço obtido. A porta inicial é 5174; se estiver ocupada, outra porta livre é escolhida. O servidor é encerrado ao terminar a execução pelo terminal. Não é necessário iniciar `npm run dev` ou `npm run dev:e2e`, e a aplicação normal pode continuar aberta na porta 5173.
+
+Para inspecionar manualmente o ambiente simulado no navegador, `npm run dev:e2e` continua disponível na porta 5174.
+
+Os cenários cobrem login/cadastro na interface, criação, edição, cancelamento, conclusão por ocorrência, falhas de gravação e validação de ícones. Não validam o Firebase Authentication, o Firestore ou suas regras; esses serviços são substituídos apenas na entrada de testes em `cypress/support/planner.jsx`. A aplicação normal continua usando `src/main.jsx`.
+
+A CI executa testes unitários e build em Linux, macOS e Windows, além do Cypress em um job Linux separado.
+
+Há um teste unitário marcado como `todo` para o conflito com a próxima ocorrência semanal. Ele executa a expectativa correta e registra a falha conhecida sem interromper a suíte. Remova a marcação quando a expansão das ocorrências for implementada. Os testes de imagem verificam o limite atual do formulário; não validam o tamanho máximo de documento do Firestore.
 
 ## Como rodar
 

@@ -104,3 +104,73 @@ test("reagenda tarefas atrasadas priorizando a maior prioridade primeiro", () =>
   assert.equal(altaReagendada.dueAt, "2026-11-18T11:30:00.000Z");
   assert.equal(baixaReagendada.dueAt, "2026-11-18T12:00:00.000Z");
 });
+
+test("encontra um horário depois de vários intervalos ocupados consecutivos", () => {
+  const tasks = [
+    createTask({ title: "Reunião", dueAt: "2026-11-18T09:30:00.000Z", endAt: "2026-11-18T10:30:00.000Z", priority: "important" }),
+    createTask({ title: "Estudar", dueAt: "2026-11-18T10:30:00.000Z", endAt: "2026-11-18T11:00:00.000Z", priority: "important" })
+  ];
+
+  assert.equal(findNextAvailableSlot(tasks, "2026-11-18T09:00:00.000Z", 45), "2026-11-18T11:00:00.000Z");
+});
+
+test("não considera tarefas concluídas ou sem data como horários ocupados", () => {
+  const tasks = [
+    { ...createTask({ title: "Concluída", dueAt: "2026-11-18T09:30:00.000Z", endAt: "2026-11-18T10:30:00.000Z", priority: "important" }), status: "done" },
+    createTask({ title: "Sem data", dueAt: null, durationMinutes: 60, priority: "urgent" })
+  ];
+
+  assert.equal(findNextAvailableSlot(tasks, "2026-11-18T09:00:00.000Z", 30), "2026-11-18T09:30:00.000Z");
+});
+
+test("informa quando não há horário livre nos próximos sete dias", () => {
+  const tasks = [createTask({
+    title: "Intervalo ocupado",
+    dueAt: "2026-11-18T09:00:00.000Z",
+    endAt: "2026-11-26T09:00:00.000Z",
+    priority: "important"
+  })];
+
+  assert.throws(() => findNextAvailableSlot(tasks, "2026-11-18T09:00:00.000Z", 30), {
+    name: "RangeError",
+    message: "No free time slot found in the next seven days."
+  });
+});
+
+test("preserva os dados originais e não reagenda tarefas repetitivas ou concluídas", () => {
+  const original = createTask({ title: "Estudar", dueAt: "2026-11-18T08:00:00.000Z", endAt: "2026-11-18T09:00:00.000Z", priority: "important" });
+  const tasks = [
+    original,
+    { ...original, id: "repetitiva", repeatDays: [3, 5], completedDates: ["2026-11-18"] },
+    { ...original, id: "concluida", status: "done" }
+  ];
+  const before = structuredClone(tasks);
+
+  const result = rescheduleOverdueTasks(tasks, "2026-11-18T11:00:00.000Z");
+
+  assert.deepEqual(tasks, before);
+  assert.notEqual(result[0].dueAt, original.dueAt);
+  assert.deepEqual(result.slice(1), tasks.slice(1));
+});
+
+test("não permite repetição em uma tarefa sem data", () => {
+  assert.throws(() => createTask({ title: "Treinar", dueAt: null, durationMinutes: 30, priority: "important", repeatDays: [1] }), {
+    message: "Repeating tasks need a date and time."
+  });
+});
+
+test("evita conflito com a próxima ocorrência de uma tarefa semanal", {
+  todo: "O reagendamento ainda compara apenas o intervalo original; corrigir a expansão das ocorrências semanais."
+}, () => {
+  const weekly = createTask({
+    title: "Reunião semanal",
+    dueAt: "2026-11-16T10:00:00",
+    endAt: "2026-11-16T11:00:00",
+    priority: "important",
+    repeatDays: [1]
+  });
+
+  const nextSlot = findNextAvailableSlot([weekly], new Date("2026-11-23T09:30:00"), 30);
+
+  assert.equal(nextSlot, new Date("2026-11-23T11:00:00").toISOString());
+});
