@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { REPEAT_DAYS } from "../calendar.js";
 import { createTask } from "../task-scheduler.js";
+import { validateTaskSize } from "../task-size.js";
 
 export function readPng(file) {
   if (file.type !== "image/png") {
@@ -12,7 +13,15 @@ export function readPng(file) {
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.addEventListener("load", () => resolve(String(reader.result)));
+    reader.addEventListener("load", () => {
+      const iconData = String(reader.result);
+      try {
+        validateTaskSize({ iconData });
+        resolve(iconData);
+      } catch (error) {
+        reject(error);
+      }
+    });
     reader.addEventListener("error", () => reject(new Error("Could not read the PNG file.")));
     reader.readAsDataURL(file);
   });
@@ -148,7 +157,7 @@ export function TaskForm({ task, onSave, onCancel }) {
             <input id="task-icon-file" name="iconFile" type="file" accept="image/png" aria-describedby="icon-hint" />
           </div>
         </div>
-        <p className="field-hint" id="icon-hint">PNG · up to 1 MB</p>
+        <p className="field-hint" id="icon-hint">PNG · up to 1 MB; the final size is checked before saving.</p>
         {task?.iconData && (
           <label className="check-label">
             <input type="checkbox" name="removeIcon" />
