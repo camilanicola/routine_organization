@@ -84,3 +84,28 @@ test("atualiza uma tarefa existente no Firestore sem duplicar o documento", { ti
   assert.deepEqual(documento.data(), tarefaEditada);
   assert.deepEqual(await repository.load(), [tarefaEditada]);
 });
+
+test("rejeita uma edição grande demais sem alterar a tarefa salva no Firestore", { timeout: 30_000 }, async (t) => {
+  const { db, user, repository } = await createAuthenticatedRepository(t);
+  const tarefa = createTask({
+    title: "Preservar tarefa",
+    dueAt: null,
+    durationMinutes: 30,
+    priority: "important"
+  });
+  await repository.save(tarefa);
+
+  await assert.rejects(repository.save({
+    ...tarefa,
+    title: "Alteração rejeitada",
+    iconData: `data:image/png;base64,${"A".repeat(1_048_576)}`
+  }), {
+    name: "RangeError",
+    message: "This task is too large to save. Choose a smaller PNG or remove the current icon."
+  });
+
+  const documento = await getDocFromServer(doc(db, "users", user.uid, "tasks", tarefa.id));
+  assert.equal(documento.exists(), true);
+  assert.deepEqual(documento.data(), tarefa);
+  assert.deepEqual(await repository.load(), [tarefa]);
+});

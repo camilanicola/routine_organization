@@ -30,6 +30,8 @@ Para executar os testes de unidade localmente:
 npm test
 ```
 
+Os testes em `src/task-size.test.js` verificam a validação local de tamanho: limite exato e um byte acima, texto UTF-8, campos nulos, repetição, histórico de conclusões e expansão do ícone para Base64. Os testes do repositório em memória verificam que uma edição ou um lote grande demais não altera os dados salvos.
+
 ### Testes de integração com Firebase
 
 Use Java 21 ou superior. O Node.js 24 está incluído nas dependências de desenvolvimento: após `npm ci`, os comandos `npm run` usam essa versão local, mesmo que o terminal ainda mostre Node.js 18 ao executar `node --version`.
@@ -48,6 +50,8 @@ O comando inicia os emuladores locais de Authentication (porta 9099) e Firestore
 O primeiro cenário está em `integration/task-repository.test.js`: cria um usuário no emulador de autenticação, salva uma tarefa usando o repositório real e confere o documento diretamente no servidor e pela leitura do repositório. As regras de `integration/firestore.rules` valem apenas para esse ambiente; não representam uma verificação das regras publicadas em produção.
 
 O segundo cenário, no mesmo arquivo, edita uma tarefa já salva e confere que o documento mantém o mesmo ID, contém os dados atualizados e não é duplicado. Cada cenário cria seu próprio usuário no emulador e encerra sua conexão ao finalizar o teste.
+
+O terceiro cenário tenta salvar uma edição com um ícone grande demais, confere o erro da validação local e consulta o servidor para garantir que o documento original foi preservado. Ele verifica a proteção antes da gravação, sem depender de uma rejeição pelo limite do servidor.
 
 `npm test` continua executando apenas os testes unitários de `src`. Os próximos cenários de integração serão adicionados individualmente, após revisão.
 
