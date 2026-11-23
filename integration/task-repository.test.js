@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { initializeApp, deleteApp } from "firebase/app";
 import { getAuth, connectAuthEmulator, createUserWithEmailAndPassword } from "firebase/auth";
-import { getFirestore, connectFirestoreEmulator, doc, getDocFromServer, terminate } from "firebase/firestore";
+import { getFirestore, connectFirestoreEmulator, collection, doc, getDocFromServer, getDocsFromServer, terminate } from "firebase/firestore";
 import { createFirestoreRepository } from "../src/task-repository.js";
 import { createTask } from "../src/task-scheduler.js";
 
@@ -168,4 +168,68 @@ test("exclui apenas as tarefas selecionadas com deleteMany no Firestore", { time
   assert.equal(documentos[1].exists(), true);
   assert.deepEqual(documentos[1].data(), preservada);
   assert.deepEqual(await repository.load(), [preservada]);
+});
+
+test("exclui mais de 500 tarefas com deleteMany preservando a tarefa não selecionada", { timeout: 30_000 }, async (t) => {
+  const { db, user, repository } = await createAuthenticatedRepository(t);
+  const selecionadas = Array.from({ length: 501 }, (_, index) => createTask({
+    title: `Remover tarefa ${index + 1}`,
+    dueAt: null,
+    durationMinutes: 30,
+    priority: "neither"
+  }));
+  const preservada = createTask({
+    title: "Preservar fora dos lotes",
+    dueAt: null,
+    durationMinutes: 45,
+    priority: "important",
+    notes: "Esta tarefa deve permanecer intacta."
+  });
+
+  // Prepara os documentos em dois lotes; a exclusão recebe a lista inteira.
+  await repository.saveMany(selecionadas.slice(0, 500));
+  await repository.saveMany([selecionadas[500], preservada]);
+  const tasksCollection = collection(db, "users", user.uid, "tasks");
+  assert.equal((await getDocsFromServer(tasksCollection)).size, 502);
+
+  await repository.deleteMany(selecionadas);
+
+  const restantes = await getDocsFromServer(tasksCollection);
+  assert.equal(restantes.size, 1);
+  assert.equal(restantes.docs[0].id, preservada.id);
+  assert.deepEqual(restantes.docs[0].data(), preservada);
+  assert.deepEqual(await repository.load(), [preservada]);
+});
+
+test("rejeita o lote inteiro de saveMany quando uma tarefa ultrapassa o limite de tamanho", { timeout: 30_000 }, async (t) => {
+  const { db, user, repository } = await createAuthenticatedRepository(t);
+  const original = createTask({
+    title: "Preservar tarefa original",
+    dueAt: null,
+    durationMinutes: 30,
+    priority: "important"
+  });
+  await repository.save(original);
+
+  const editada = { ...original, title: "Edição que deve ser rejeitada", durationMinutes: 45 };
+  const nova = createTask({ title: "Nova tarefa válida", dueAt: null, durationMinutes: 60, priority: "urgent" });
+  const grandeDemais = createTask({
+    title: "Tarefa grande demais",
+    dueAt: null,
+    durationMinutes: 30,
+    priority: "neither",
+    notes: "a".repeat(1_048_576)
+  });
+
+  // A tarefa inválida fica por último para detectar gravações parciais anteriores.
+  await assert.rejects(repository.saveMany([editada, nova, grandeDemais]), {
+    name: "RangeError",
+    message: "This task is too large to save. Reduce its content."
+  });
+
+  const documentos = await getDocsFromServer(collection(db, "users", user.uid, "tasks"));
+  assert.equal(documentos.size, 1);
+  assert.equal(documentos.docs[0].id, original.id);
+  assert.deepEqual(documentos.docs[0].data(), original);
+  assert.deepEqual(await repository.load(), [original]);
 });

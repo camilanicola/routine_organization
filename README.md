@@ -57,6 +57,10 @@ O quarto cenário grava várias tarefas com `saveMany`, verifica cada documento 
 
 O quinto cenário grava três tarefas e usa `deleteMany` para excluir duas delas. As consultas ao servidor confirmam a remoção das selecionadas e a preservação dos dados da tarefa restante; `load` deve retornar apenas essa tarefa.
 
+O sexto cenário grava 502 tarefas e envia 501 delas em uma única chamada de `deleteMany`, exercitando a exclusão em mais de um lote. A consulta da coleção no servidor e a leitura pelo repositório devem retornar apenas a tarefa não selecionada, com seus dados intactos.
+
+O sétimo cenário envia a `saveMany` uma edição válida, uma tarefa nova válida e uma tarefa grande demais no final do lote. Ele confere o erro da validação local e verifica no servidor e pelo repositório que nenhum documento foi criado e que a tarefa original permaneceu intacta.
+
 `npm test` continua executando apenas os testes unitários de `src`. Os próximos cenários de integração serão adicionados individualmente, após revisão.
 
 ### Testes E2E
