@@ -58,6 +58,62 @@ test("não cria uma tarefa com título vazio", () => {
   }), { message: "Enter a task title." });
 });
 
+test("não cria uma tarefa com data inicial inválida ou ausente", () => {
+  for (const dueAt of ["data-inválida", "", undefined]) {
+    assert.throws(() => createTask({
+      title: "Estudar",
+      dueAt,
+      endAt: "2026-11-18T11:00:00.000Z",
+      priority: "important"
+    }), { name: "TypeError", message: "Enter a valid date and time." });
+  }
+});
+
+test("não cria uma tarefa com término inválido, ausente ou igual ao início", () => {
+  for (const endAt of ["data-inválida", undefined, null, "2026-11-18T10:00:00.000Z"]) {
+    assert.throws(() => createTask({
+      title: "Estudar",
+      dueAt: "2026-11-18T10:00:00.000Z",
+      endAt,
+      priority: "important"
+    }), { name: "TypeError", message: "The end date and time must be after the start." });
+  }
+});
+
+test("exige uma duração inteira positiva para tarefas sem data", () => {
+  for (const durationMinutes of [0, -1, 1.5, NaN, Infinity, "30", undefined]) {
+    assert.throws(() => createTask({
+      title: "Estudar",
+      dueAt: null,
+      durationMinutes,
+      priority: "important"
+    }), { name: "TypeError", message: "Enter a valid duration in minutes." });
+  }
+});
+
+test("não cria uma tarefa com dias de repetição inválidos", () => {
+  for (const repeatDays of [[-1], [7], [1.5], ["1"], [NaN], [1, 7]]) {
+    assert.throws(() => createTask({
+      title: "Estudar",
+      dueAt: "2026-11-18T10:00:00.000Z",
+      endAt: "2026-11-18T11:00:00.000Z",
+      priority: "important",
+      repeatDays
+    }), { name: "TypeError", message: "Choose valid repeat days." });
+  }
+});
+
+test("não cria uma tarefa com prioridade desconhecida, ausente ou herdada do protótipo", () => {
+  for (const priority of ["alta", "", undefined, "toString", "__proto__"]) {
+    assert.throws(() => createTask({
+      title: "Estudar",
+      dueAt: null,
+      durationMinutes: 30,
+      priority
+    }), { name: "TypeError", message: "Choose a valid priority." });
+  }
+});
+
 test("reagenda uma tarefa atrasada mantendo sua duração", () => {
   const task = createTask({
     title: "Estudar",
@@ -103,6 +159,72 @@ test("reagenda tarefas atrasadas priorizando a maior prioridade primeiro", () =>
 
   assert.equal(altaReagendada.dueAt, "2026-11-18T11:30:00.000Z");
   assert.equal(baixaReagendada.dueAt, "2026-11-18T12:00:00.000Z");
+});
+
+test("desempata tarefas da mesma prioridade pelo início mais antigo", () => {
+  const recente = createTask({
+    title: "Tarefa mais recente",
+    dueAt: "2026-11-18T09:00:00.000Z",
+    endAt: "2026-11-18T09:30:00.000Z",
+    priority: "important"
+  });
+  const antiga = createTask({
+    title: "Tarefa mais antiga",
+    dueAt: "2026-11-18T08:00:00.000Z",
+    endAt: "2026-11-18T10:00:00.000Z",
+    priority: "important"
+  });
+
+  // A mais antiga começa antes, mas termina depois e vem por último na entrada.
+  const resultado = rescheduleOverdueTasks([recente, antiga], "2026-11-18T11:00:00.000Z");
+
+  assert.deepEqual(resultado, [
+    { ...recente, dueAt: "2026-11-18T13:30:00.000Z", endAt: "2026-11-18T14:00:00.000Z" },
+    { ...antiga, dueAt: "2026-11-18T11:30:00.000Z", endAt: "2026-11-18T13:30:00.000Z" }
+  ]);
+});
+
+test("não busca horário livre com um instante de referência inválido", () => {
+  for (const after of ["data-inválida", "", undefined, new Date(NaN)]) {
+    assert.throws(() => findNextAvailableSlot([], after, 30), {
+      name: "TypeError",
+      message: "Enter a valid time and duration."
+    });
+  }
+});
+
+test("não busca horário livre com duração inválida", () => {
+  for (const durationMinutes of [0, -30, NaN, Infinity, "30", undefined]) {
+    assert.throws(() => findNextAvailableSlot([], "2026-11-18T09:00:00.000Z", durationMinutes), {
+      name: "TypeError",
+      message: "Enter a valid time and duration."
+    });
+  }
+});
+
+test("informa quando uma tarefa armazenada tem término inválido", () => {
+  const task = createTask({
+    title: "Estudar",
+    dueAt: "2026-11-18T10:00:00.000Z",
+    endAt: "2026-11-18T11:00:00.000Z",
+    priority: "important"
+  });
+
+  for (const endAt of ["data-inválida", null, undefined, task.dueAt, "2026-11-18T09:00:00.000Z"]) {
+    assert.throws(() => findNextAvailableSlot([{ ...task, endAt }], "2026-11-18T09:00:00.000Z", 30), {
+      name: "TypeError",
+      message: "A task has an invalid end date and time."
+    });
+  }
+});
+
+test("não reagenda tarefas com um instante de referência inválido", () => {
+  for (const now of ["data-inválida", "", undefined, new Date(NaN)]) {
+    assert.throws(() => rescheduleOverdueTasks([], now), {
+      name: "TypeError",
+      message: "Enter a valid date and time."
+    });
+  }
 });
 
 test("encontra um horário depois de vários intervalos ocupados consecutivos", () => {

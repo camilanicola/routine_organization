@@ -32,6 +32,8 @@ npm test
 
 Os testes em `src/task-size.test.js` verificam a validação local de tamanho: limite exato e um byte acima, texto UTF-8, campos nulos, repetição, histórico de conclusões e expansão do ícone para Base64. Os testes do repositório em memória verificam que uma edição ou um lote grande demais não altera os dados salvos.
 
+Os testes em `src/task-scheduler.test.js` cobrem entradas inválidas na criação e no reagendamento: datas, duração, prioridade, dias de repetição e intervalos armazenados. Também verificam que, entre tarefas da mesma prioridade, a de início mais antigo recebe o primeiro horário disponível, mantendo as durações e a ordem da lista retornada.
+
 ### Testes de integração com Firebase
 
 Use Java 21 ou superior. O Node.js 24 está incluído nas dependências de desenvolvimento: após `npm ci`, os comandos `npm run` usam essa versão local, mesmo que o terminal ainda mostre Node.js 18 ao executar `node --version`.
