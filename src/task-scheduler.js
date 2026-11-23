@@ -1,3 +1,5 @@
+import { getTasksOnDate, shiftDate } from "./calendar.js";
+
 export const PRIORITIES = Object.freeze({
   "important-urgent": 4,
   urgent: 3,
@@ -73,25 +75,51 @@ export function findNextAvailableSlot(tasks, after, durationMinutes) {
   const duration = durationMinutes * 60_000;
   let candidate = Math.ceil((startAfter + 1) / step) * step;
   const deadline = startAfter + SEARCH_DAYS * 24 * 60 * 60_000;
+  const occupiedIntervals = getOccupiedIntervals(tasks, candidate, deadline + duration);
 
   while (candidate <= deadline) {
     const candidateEnd = candidate + duration;
-    const overlaps = tasks.some((task) => {
-      if (task.status === "done") return false;
-      const taskStart = Date.parse(task.dueAt);
-      if (!Number.isFinite(taskStart)) return false;
-      const taskEnd = Date.parse(task.endAt);
-      if (!Number.isFinite(taskEnd) || taskEnd <= taskStart) {
-        throw new TypeError("A task has an invalid end date and time.");
-      }
-      return candidate < taskEnd && candidateEnd > taskStart;
-    });
+    const overlaps = occupiedIntervals.some(({ start, end }) => candidate < end && candidateEnd > start);
 
     if (!overlaps) return new Date(candidate).toISOString();
     candidate += step;
   }
 
   throw new RangeError("No free time slot found in the next seven days.");
+}
+
+function getOccupiedIntervals(tasks, windowStart, windowEnd) {
+  return tasks.flatMap((task) => {
+    const isRepeating = task.repeatDays?.length > 0;
+    if (!isRepeating && task.status === "done") return [];
+    const taskStart = Date.parse(task.dueAt);
+    if (!Number.isFinite(taskStart)) return [];
+    const taskEnd = Date.parse(task.endAt);
+    if (!Number.isFinite(taskEnd) || taskEnd <= taskStart) {
+      throw new TypeError("A task has an invalid end date and time.");
+    }
+    if (!isRepeating) return [{ start: taskStart, end: taskEnd }];
+
+    const duration = taskEnd - taskStart;
+    const originalStart = new Date(taskStart);
+    const firstDay = shiftDate(originalStart, 0).getTime();
+    const intervals = [];
+    // Inclui ocorrências anteriores que ainda estejam em andamento na busca.
+    let day = shiftDate(new Date(Math.max(taskStart, windowStart - duration)), 0);
+
+    for (; day.getTime() < windowEnd; day = shiftDate(day, 1)) {
+      // Compartilha com o calendário os dias escolhidos e a conclusão por data.
+      if (getTasksOnDate([task], day)[0]?.status !== "pending") continue;
+      const start = day.getTime() === firstDay ? taskStart : new Date(
+        day.getFullYear(), day.getMonth(), day.getDate(),
+        originalStart.getHours(), originalStart.getMinutes(), originalStart.getSeconds(), originalStart.getMilliseconds()
+      ).getTime();
+      const end = start + duration;
+      if (start < windowEnd && end > windowStart) intervals.push({ start, end });
+    }
+
+    return intervals;
+  });
 }
 
 export function rescheduleOverdueTasks(tasks, now) {

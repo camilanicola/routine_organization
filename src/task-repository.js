@@ -1,4 +1,5 @@
 import { collection, doc, getDocs, setDoc, writeBatch } from "firebase/firestore";
+import { validateTaskSize } from "./task-size.js";
 
 export function hasExplicitTiming(task) {
   if (!Object.hasOwn(task, "endAt")) return false;
@@ -24,10 +25,12 @@ export function createFirestoreRepository(db, userId) {
     },
 
     async save(task) {
+      validateTaskSize(task);
       await setDoc(doc(tasksCollection, task.id), task);
     },
 
     async saveMany(tasks) {
+      tasks.forEach(validateTaskSize);
       const batch = writeBatch(db);
       tasks.forEach((task) => batch.set(doc(tasksCollection, task.id), task));
       await batch.commit();
@@ -52,10 +55,12 @@ export function createMemoryRepository(initialTasks = []) {
     },
 
     async save(task) {
+      validateTaskSize(task);
       stored.set(task.id, structuredClone(task));
     },
 
     async saveMany(tasks) {
+      tasks.forEach(validateTaskSize);
       tasks.forEach((task) => stored.set(task.id, structuredClone(task)));
     },
 
