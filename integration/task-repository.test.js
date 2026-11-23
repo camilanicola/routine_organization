@@ -148,3 +148,24 @@ test("salva e carrega várias tarefas com saveMany no Firestore", { timeout: 30_
     new Map(tarefas.map((tarefa) => [tarefa.id, tarefa]))
   );
 });
+
+test("exclui apenas as tarefas selecionadas com deleteMany no Firestore", { timeout: 30_000 }, async (t) => {
+  const { db, user, repository } = await createAuthenticatedRepository(t);
+  const tarefas = ["Remover primeira tarefa", "Preservar tarefa", "Remover última tarefa"].map((title) =>
+    createTask({ title, dueAt: null, durationMinutes: 30, priority: "important" })
+  );
+  const [primeira, preservada, ultima] = tarefas;
+  await repository.saveMany(tarefas);
+  assert.equal((await repository.load()).length, tarefas.length);
+
+  await repository.deleteMany([primeira, ultima]);
+
+  const documentos = await Promise.all(tarefas.map((tarefa) =>
+    getDocFromServer(doc(db, "users", user.uid, "tasks", tarefa.id))
+  ));
+  assert.equal(documentos[0].exists(), false);
+  assert.equal(documentos[2].exists(), false);
+  assert.equal(documentos[1].exists(), true);
+  assert.deepEqual(documentos[1].data(), preservada);
+  assert.deepEqual(await repository.load(), [preservada]);
+});
