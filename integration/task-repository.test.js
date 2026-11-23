@@ -233,3 +233,45 @@ test("rejeita o lote inteiro de saveMany quando uma tarefa ultrapassa o limite d
   assert.deepEqual(documentos.docs[0].data(), original);
   assert.deepEqual(await repository.load(), [original]);
 });
+
+test("isola as tarefas de cada usuário e bloqueia o acesso à coleção de outro usuário", { timeout: 30_000 }, async (t) => {
+  const usuariaA = await createAuthenticatedRepository(t);
+  const usuariaB = await createAuthenticatedRepository(t);
+  assert.notEqual(usuariaA.user.uid, usuariaB.user.uid);
+
+  const tarefaA = createTask({
+    title: "Tarefa da usuária A",
+    dueAt: null,
+    durationMinutes: 30,
+    priority: "important",
+    notes: "Anotações da usuária A"
+  });
+  // O mesmo ID deve identificar documentos independentes nas duas coleções.
+  const tarefaB = { ...tarefaA, title: "Tarefa da usuária B", notes: "Anotações da usuária B" };
+  await usuariaA.repository.save(tarefaA);
+  await usuariaB.repository.save(tarefaB);
+
+  assert.deepEqual(await usuariaA.repository.load(), [tarefaA]);
+  assert.deepEqual(await usuariaB.repository.load(), [tarefaB]);
+
+  // Usa a sessão de A com o caminho de B para exercitar as regras do emulador.
+  const acessoIndevido = createFirestoreRepository(usuariaA.db, usuariaB.user.uid);
+  const erroDePermissao = { code: "permission-denied" };
+  await assert.rejects(acessoIndevido.load(), erroDePermissao);
+  await assert.rejects(
+    getDocFromServer(doc(usuariaA.db, "users", usuariaB.user.uid, "tasks", tarefaB.id)),
+    erroDePermissao
+  );
+  const alterada = { ...tarefaB, title: "Alteração não autorizada" };
+  await assert.rejects(acessoIndevido.save(alterada), erroDePermissao);
+  const nova = createTask({ title: "Inclusão não autorizada", dueAt: null, durationMinutes: 45, priority: "urgent" });
+  await assert.rejects(acessoIndevido.saveMany([alterada, nova]), erroDePermissao);
+  await assert.rejects(acessoIndevido.deleteMany([tarefaB]), erroDePermissao);
+
+  const [documentosA, documentosB] = await Promise.all([
+    getDocsFromServer(collection(usuariaA.db, "users", usuariaA.user.uid, "tasks")),
+    getDocsFromServer(collection(usuariaB.db, "users", usuariaB.user.uid, "tasks"))
+  ]);
+  assert.deepEqual(documentosA.docs.map((documento) => documento.data()), [tarefaA]);
+  assert.deepEqual(documentosB.docs.map((documento) => documento.data()), [tarefaB]);
+});

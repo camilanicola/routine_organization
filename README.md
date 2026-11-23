@@ -61,6 +61,8 @@ O sexto cenário grava 502 tarefas e envia 501 delas em uma única chamada de `d
 
 O sétimo cenário envia a `saveMany` uma edição válida, uma tarefa nova válida e uma tarefa grande demais no final do lote. Ele confere o erro da validação local e verifica no servidor e pelo repositório que nenhum documento foi criado e que a tarefa original permaneceu intacta.
 
+O oitavo cenário autentica duas usuárias e salva tarefas com o mesmo ID e conteúdos diferentes em suas coleções. Confere a leitura isolada e exige `permission-denied` ao tentar listar, ler, editar, gravar em lote ou excluir tarefas da outra usuária. Ao final, consulta o servidor com cada sessão para garantir que os dados permaneceram intactos. Esse cenário valida as regras locais de integração, não as regras publicadas em produção.
+
 `npm test` continua executando apenas os testes unitários de `src`. Os próximos cenários de integração serão adicionados individualmente, após revisão.
 
 ### Testes E2E
