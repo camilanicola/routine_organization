@@ -109,3 +109,42 @@ test("rejeita uma edição grande demais sem alterar a tarefa salva no Firestore
   assert.deepEqual(documento.data(), tarefa);
   assert.deepEqual(await repository.load(), [tarefa]);
 });
+
+test("salva e carrega várias tarefas com saveMany no Firestore", { timeout: 30_000 }, async (t) => {
+  const { db, user, repository } = await createAuthenticatedRepository(t);
+  const tarefas = [
+    createTask({
+      title: "Ler um capítulo",
+      dueAt: null,
+      durationMinutes: 30,
+      priority: "important",
+      notes: "Anotar dúvidas",
+      iconText: "📚"
+    }),
+    createTask({
+      title: "Revisão semanal",
+      dueAt: "2026-11-18T10:00:00.000Z",
+      endAt: "2026-11-18T11:00:00.000Z",
+      priority: "urgent",
+      repeatDays: [3, 5]
+    })
+  ];
+
+  await repository.saveMany(tarefas);
+
+  const documentos = await Promise.all(tarefas.map((tarefa) =>
+    getDocFromServer(doc(db, "users", user.uid, "tasks", tarefa.id))
+  ));
+  documentos.forEach((documento, index) => {
+    assert.equal(documento.exists(), true);
+    assert.deepEqual(documento.data(), tarefas[index]);
+  });
+
+  const carregadas = await repository.load();
+  assert.equal(carregadas.length, tarefas.length);
+  // A leitura não promete a mesma ordem em que as tarefas foram enviadas.
+  assert.deepEqual(
+    new Map(carregadas.map((tarefa) => [tarefa.id, tarefa])),
+    new Map(tarefas.map((tarefa) => [tarefa.id, tarefa]))
+  );
+});

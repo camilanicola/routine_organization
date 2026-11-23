@@ -53,6 +53,8 @@ O segundo cenário, no mesmo arquivo, edita uma tarefa já salva e confere que o
 
 O terceiro cenário tenta salvar uma edição com um ícone grande demais, confere o erro da validação local e consulta o servidor para garantir que o documento original foi preservado. Ele verifica a proteção antes da gravação, sem depender de uma rejeição pelo limite do servidor.
 
+O quarto cenário grava várias tarefas com `saveMany`, verifica cada documento diretamente no servidor e confere que `load` retorna todas com os IDs e dados corretos, sem depender da ordem de leitura.
+
 `npm test` continua executando apenas os testes unitários de `src`. Os próximos cenários de integração serão adicionados individualmente, após revisão.
 
 ### Testes E2E
