@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "dev:e2e": "vite --config vite.e2e.config.js --host 127.0.0.1 --port 5174 --strictPort",
-    "test": "node --test",
+    "test": "node --test \"src/*.test.js\"",
+    "test:integration": "firebase emulators:exec --project demo-magical-girl-planner --config firebase.integration.json --only auth,firestore \"npm run test:integration:run\"",
+    "test:integration:run": "node --test \"integration/*.test.js\"",
     "e2e:open": "cypress open",
     "e2e:run": "cypress run",
     "build": "vite build",
@@ -20,6 +22,8 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^5.2.0",
     "cypress": "^16.3.0",
+    "firebase-tools": "15.37.0",
+    "node": "24.22.3",
     "vite": "^6.2.7"
   }
 }
