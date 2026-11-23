@@ -82,7 +82,7 @@ O comando executa apenas `src/*.test.js`, com `node:test` e `node:assert/strict`
 | [task-scheduler.test.js](src/task-scheduler.test.js) | Criação e entradas inválidas, conflitos semanais, intervalos que atravessam dias, falta de horário livre e reagendamento por prioridade, com desempate pelo início mais antigo. |
 | [task-size.test.js](src/task-size.test.js) | Limite exato e um byte acima, texto UTF-8, campos nulos, arrays, histórico de conclusões, expansão Base64 e valores não suportados. |
 | [task-repository.test.js](src/task-repository.test.js) | Filtro de compatibilidade, remoção e rejeição de edições ou lotes grandes demais, preservando os dados do repositório em memória. |
-| [task-storage.test.js](src/task-storage.test.js) | Leitura e filtragem do armazenamento local legado. |
+| [task-storage.test.js](src/task-storage.test.js) | Leitura, filtragem e limpeza do armazenamento local legado, dados ausentes ou corrompidos, falhas de acesso e uso do `localStorage` padrão. |
 | [auth-errors.test.js](src/auth-errors.test.js) e [create-account.test.js](src/create-account.test.js) | Mensagens de erro e confirmação de senha. |
 
 Os cenários do agendador também verificam a preservação do horário local e da duração das repetições. Para exercitar as mudanças de horário de verão em Linux ou macOS:
