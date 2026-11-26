@@ -8,7 +8,7 @@
 
 ## Sobre o sistema
 
-O Magical Girl Planner organiza tarefas em uma agenda diária e um calendário mensal. Permite criar tarefas com ou sem data, definir prioridades pela matriz de Eisenhower, configurar repetição semanal e adicionar ícones e notas. A interface está em inglês.
+O Magical Girl Planner organiza tarefas em uma agenda diária e um calendário mensal. Permite criar tarefas com ou sem data, definir prioridades pela matriz de Eisenhower, configurar repetição semanal e adicionar ícones e notas. 
 
 Ao carregar a agenda, tarefas atrasadas, pendentes e sem repetição são reagendadas por prioridade, mantendo sua duração. A busca de horário livre considera as ocorrências semanais nos dias escolhidos, a partir da data inicial. Concluir uma ocorrência libera apenas seu próprio intervalo, sem concluir a série inteira.
 
